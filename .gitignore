@@ -2,27 +2,54 @@
 node_modules/
 .pnpm-store/
 
-# build outputs
-dist/
-build/
-.next/
-out/
-.turbo/
-coverage/
-
-# env
-.env
-.env.*
-!.env.example
-
-# logs
-*.log
+# package manager
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
+# build outputs
+dist/
+build/
+.next/
+out/
+.output/
+.vercel/
+.turbo/
+coverage/
+
+# framework / compiler caches
+.swc/
+*.tsbuildinfo
+tsconfig.tsbuildinfo
+
+# test outputs
+.nyc_output/
+test-results/
+playwright-report/
+junit.xml
+
+# env
+.env
+.env.*
+!.env.example
+!.env.*.example
+
+# logs
+*.log
+logs/
+
+# runtime / temp files
+tmp/
+temp/
+.cache/
+*.pid
+*.seed
+
 # editor / os
 .DS_Store
+Thumbs.db
 .idea/
 .vscode/
+*.swp
+*.swo

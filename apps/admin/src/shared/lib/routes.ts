@@ -1,0 +1,15 @@
+export const routes = {
+  login: '/login',
+  auditLogs: '/setting/audit-logs',
+  dashboard: '/',
+  groupEdit: (code: string) => `/setting/groups/${code}/edit`,
+  groups: '/setting/groups',
+  menuCreate: '/setting/menus/create',
+  menuEdit: (code: string) => `/setting/menus/${code}/edit`,
+  menus: '/setting/menus',
+  policies: '/setting/policies',
+  users: '/setting/users',
+  userCreate: '/setting/users/create',
+  userEdit: (id: string) => `/setting/users/${id}/edit`,
+  settings: '/setting',
+} as const;

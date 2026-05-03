@@ -21,6 +21,38 @@ Recommended stack:
 - Shared UI from `packages/ui`
 - Shared DTOs and contracts from `packages/types`
 
+## Architecture Style
+
+Use Feature-Sliced Design Lite (FSD-lite) adapted for Next.js App Router.
+
+Keep Next.js `app/` focused on routing, layouts, metadata, and route-level
+composition. Put reusable business UI and workflow logic under `src/`.
+
+Use `src/views` for the FSD page-composition layer. Do not create `src/app` or
+`src/pages` in this app because Next.js treats those folders as App Router and
+legacy Pages Router roots.
+
+Layer direction:
+
+```txt
+app -> views -> widgets -> features -> entities -> shared
+```
+
+Higher layers may import lower layers. Lower layers must not import higher
+layers.
+
+Examples:
+
+- `features/user-create` may import `entities/user` and `shared/*`.
+- `widgets/user-table` may import `features/user-filter`, `entities/user`, and
+  `shared/*`.
+- `entities/user` may import `shared/api`, `shared/lib`, and shared types.
+- `shared/*` must not import from `entities`, `features`, `widgets`, `views`, or
+  `app`.
+
+Use FSD pragmatically. Do not create empty layers or abstractions before they
+serve a real screen or workflow.
+
 ## Architecture Goals
 
 - Keep pages thin. Pages compose feature components and route-level layout only.
@@ -50,41 +82,66 @@ apps/admin/
       auth/
         route.ts
   src/
-    app/
-      providers.tsx
-    components/
-      layout/
-      navigation/
-      feedback/
-    config/
-      env.ts
-      navigation.ts
-    features/
-      auth/
-        api.ts
-        hooks.ts
-        schemas.ts
-        types.ts
-        components/
+    views/
+      dashboard/
+        ui/
       users/
+        ui/
+    widgets/
+      app-sidebar/
+      app-header/
+      user-table/
+    features/
+      auth-login/
         api.ts
         hooks.ts
         schemas.ts
         types.ts
-        components/
-    lib/
-      api-client.ts
-      auth.ts
-      permissions.ts
-      query-client.ts
-      routes.ts
-      utils.ts
+        ui/
+      user-create/
+        api.ts
+        hooks.ts
+        schemas.ts
+        types.ts
+        ui/
+      user-filter/
+        model.ts
+        ui/
+    entities/
+      user/
+        api.ts
+        hooks.ts
+        schemas.ts
+        types.ts
+        ui/
+      permission/
+        types.ts
+        lib.ts
+    shared/
+      api/
+        api-client.ts
+        errors.ts
+      config/
+        env.ts
+        navigation.ts
+      lib/
+        auth.ts
+        permissions.ts
+        query-client.ts
+        routes.ts
+        utils.ts
+      providers/
+        providers.tsx
+      ui/
+        empty-state.tsx
+        error-state.tsx
     styles/
       globals.css
 ```
 
-Use feature folders for real workflows. A feature owns its list/detail/form
-components, validation schemas, local types, and API hook wrappers.
+Use feature folders for real workflows. A feature owns its action-specific UI,
+validation schemas, local types, and mutation/query wrappers. Use entity folders
+for domain-specific data access, schemas, types, and reusable entity UI.
 
 ## Routing
 
@@ -118,6 +175,7 @@ Use environment variables for runtime configuration:
 ```env
 NEXT_PUBLIC_API_URL=https://api.domain.com
 NEXT_PUBLIC_APP_BASE_PATH=
+NEXT_PUBLIC_LOG_LEVEL=info
 ```
 
 For path-based deployment:
@@ -125,21 +183,24 @@ For path-based deployment:
 ```env
 NEXT_PUBLIC_API_URL=https://domain.com/api
 NEXT_PUBLIC_APP_BASE_PATH=/admin
+NEXT_PUBLIC_LOG_LEVEL=info
 ```
 
-Validate environment values in `src/config/env.ts`. Do not read
+Validate environment values in `src/shared/config/env.ts`. Do not read
 `process.env` directly throughout the app.
 
 ## API Integration
 
-All HTTP calls should go through `src/lib/api-client.ts`.
+All HTTP calls should go through `src/shared/api/api-client.ts`.
 
 Recommended pattern:
 
-- `src/lib/api-client.ts` owns base URL, headers, credentials, token refresh
-  behavior, and error normalization.
-- `features/*/api.ts` exports typed request functions.
-- `features/*/hooks.ts` wraps request functions with TanStack Query.
+- `src/shared/api/api-client.ts` owns base URL, headers, credentials, token
+  refresh behavior, and error normalization.
+- `entities/*/api.ts` exports entity-level typed request functions.
+- `entities/*/hooks.ts` wraps common entity queries with TanStack Query.
+- `features/*/api.ts` exports workflow-specific request functions when needed.
+- `features/*/hooks.ts` wraps workflow-specific mutations or query composition.
 - Shared request/response contracts live in `packages/types` when used by more
   than one app or service.
 
@@ -167,6 +228,12 @@ The app should support one clear authentication strategy:
   domain.
 - Use bearer tokens only when cookie sessions are not practical for deployment.
 
+Before implementing or changing login/session behavior, read:
+
+```txt
+apps/api/docs/login-flow.md
+```
+
 Required pieces:
 
 - Login page under `app/(auth)/login`.
@@ -189,9 +256,27 @@ Example:
 type Permission = 'users.read' | 'users.create' | 'users.update' | 'reports.read';
 ```
 
-Use `src/lib/permissions.ts` for helpers such as `can(user, permission)`.
+Use `src/shared/lib/permissions.ts` for helpers such as
+`can(user, permission)`.
 Feature components may use permission helpers for UI visibility, but the API
 must still enforce all authorization rules.
+
+Implemented access screens:
+
+- `/setting/users` lists users and links to full-page create/edit screens.
+- `/setting/groups` lists groups and their assigned policies.
+- `/setting/groups/:code/edit` edits the full policy set for a group.
+- `/setting/policies` shows read-only policy details, permissions, and menus.
+- `/setting/audit-logs` lists audit events with filters and pagination.
+- `/setting/menus` lists menu records with active/system status.
+- `/setting/menus/create` and `/setting/menus/:code/edit` manage menu records
+  through full-page forms.
+- Create, edit, delete, and policy-save success states should use
+  `src/shared/ui/feedback-dialog.tsx`.
+- Avoid modal forms for create/edit workflows because admin records may grow
+  into larger forms. Use full pages for create/edit and reserve modals for
+  confirmation/feedback.
+- Access-control API calls live in `src/entities/access-control`.
 
 ## UI Principles
 
@@ -206,7 +291,9 @@ This is an internal tool. Design for speed, clarity, and repeated use:
 - Keep page headings, breadcrumbs, and primary actions consistent.
 
 Use components from `packages/ui` only when they are generic and reusable across
-apps. Domain-specific admin screens should stay inside `apps/admin/src/features`.
+apps. Domain-specific admin screens should stay inside `apps/admin/src/views`,
+`apps/admin/src/widgets`, `apps/admin/src/features`, or
+`apps/admin/src/entities`.
 
 ## Forms
 
@@ -237,7 +324,7 @@ query params.
 
 ## Error Handling
 
-Normalize API errors in `src/lib/api-client.ts` into a consistent shape:
+Normalize API errors in `src/shared/api/api-client.ts` into a consistent shape:
 
 ```ts
 type ApiError = {
@@ -249,6 +336,27 @@ type ApiError = {
 ```
 
 Feature screens should not parse raw `fetch` or Axios errors directly.
+
+## Logging And Error Reporting
+
+Keep client-side logging intentional and centralized.
+
+Recommended pattern:
+
+- Use a global error boundary for unexpected runtime failures.
+- Use a single reporting adapter under `src/shared/lib/error-reporting.ts` when
+  integrating Sentry, OpenTelemetry, or another monitoring provider later.
+- Control client diagnostics through environment configuration such as
+  `NEXT_PUBLIC_LOG_LEVEL`.
+- Do not hardcode verbose client logging in production builds.
+- Report unexpected errors with route, feature name, request id, and user id
+  when safely available.
+- Do not report passwords, tokens, cookies, authorization headers, or raw form
+  values.
+- Avoid scattered `console.log` or `console.error` in feature code. Use the
+  shared reporting adapter or local development-only diagnostics.
+- User-facing error messages should stay clear and safe; detailed diagnostics
+  belong in logs or monitoring.
 
 ## Shared Packages
 
@@ -263,16 +371,67 @@ import from `apps/*`.
 
 ## Testing
 
-Start with focused tests around risky behavior:
+Use a layered testing strategy. Keep tests close to the layer they protect.
 
-- Permission helpers.
-- API client error normalization.
-- Form schemas.
-- Table query param parsing.
-- Critical feature workflows.
+Recommended tools:
 
-When adding end-to-end tests later, cover login, protected route redirects,
-CRUD flows, and permission-specific visibility.
+- Vitest for unit and integration-style frontend tests.
+- React Testing Library for component behavior.
+- MSW for mocking API responses at the network boundary.
+- Playwright for browser end-to-end tests.
+- `@testing-library/jest-dom` matchers for DOM assertions.
+- `axe-core` or Playwright accessibility checks for critical screens when
+  practical.
+
+Test placement:
+
+```txt
+src/shared/**/*.test.ts
+src/entities/**/*.test.ts
+src/features/**/*.test.tsx
+src/widgets/**/*.test.tsx
+e2e/**/*.spec.ts
+```
+
+Coverage targets:
+
+- Global unit/component coverage: at least 80% lines, statements, and functions.
+- Global branch coverage: at least 75%.
+- Critical auth, permissions, API client, env parsing, form schemas, and query
+  param parsing: at least 90%.
+- New or changed business logic should be covered before merging.
+- Do not chase 100% coverage for visual-only markup; test behavior and risk.
+
+Required test coverage by area:
+
+- `src/shared/api`: request building, credentials behavior, error normalization,
+  and validation error mapping.
+- `src/shared/config`: env parsing and missing/invalid env behavior.
+- `src/shared/lib/permissions.ts`: positive and negative permission cases.
+- `src/entities/*`: entity schemas, query key builders, API mappers, and reusable
+  entity helpers.
+- `src/features/*`: form validation, submit behavior, mutation success/error
+  states, and permission-aware action visibility.
+- `src/widgets/*`: table state, filters, pagination, empty state, loading state,
+  and error state.
+
+End-to-end tests should cover the happy path and the highest-risk permission
+paths:
+
+- Login.
+- Anonymous users are redirected away from protected routes.
+- Authenticated users can open the dashboard.
+- Permission-restricted actions are hidden or blocked.
+- One representative CRUD workflow for each critical domain module.
+
+Run before merge when the admin app exists:
+
+```bash
+pnpm --filter @aic/admin typecheck
+pnpm --filter @aic/admin test
+pnpm --filter @aic/admin test:e2e
+pnpm --filter @aic/admin build
+```
 
 ## Coding Rules
 

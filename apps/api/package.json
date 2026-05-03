@@ -10,22 +10,32 @@
     "lint": "echo \"lint: @aic/api\"",
     "test": "echo \"test: @aic/api\"",
     "typecheck": "tsc -p tsconfig.json --noEmit",
+    "db:create": "node ./scripts/create-database.cjs",
+    "db:setup": "pnpm run db:create && pnpm run db:migrate",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
+    "db:seed": "node ./scripts/seed-rbac.cjs",
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
     "@aic/types": "workspace:*",
+    "@fastify/cookie": "^11.0.2",
+    "@fastify/cors": "^11.2.0",
     "@nestjs/common": "^11.1.0",
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.1.0",
-    "@nestjs/platform-express": "^11.1.0",
+    "@nestjs/platform-fastify": "^11.1.0",
+    "argon2": "^0.44.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
-    "reflect-metadata": "^0.2.2",
-    "rxjs": "^7.8.1",
     "drizzle-orm": "^0.44.7",
-    "pg": "^8.16.3"
+    "fastify": "^5.8.4",
+    "ioredis": "^5.4.2",
+    "nestjs-pino": "^4.4.0",
+    "pg": "^8.16.3",
+    "pino": "^9.5.0",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.1"
   },
   "devDependencies": {
     "@aic/config": "workspace:*",
@@ -33,8 +43,8 @@
     "@nestjs/schematics": "^11.0.5",
     "@nestjs/testing": "^11.1.0",
     "@types/node": "^22.15.3",
-    "typescript": "^5.8.3",
     "@types/pg": "^8.15.5",
-    "drizzle-kit": "^0.31.6"
+    "drizzle-kit": "^0.31.6",
+    "typescript": "^5.8.3"
   }
 }

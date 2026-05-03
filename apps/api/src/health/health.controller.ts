@@ -1,22 +1,12 @@
 import { Controller, Get } from '@nestjs/common';
-import type { ApiResponse } from '@aic/types';
-import { HealthService } from './health.service';
-
-type HealthStatus = {
-  service: string;
-  status: 'ok';
-  timestamp: string;
-};
+import { HealthService, type HealthStatus } from './health.service';
 
 @Controller('health')
 export class HealthController {
   constructor(private readonly healthService: HealthService) {}
 
   @Get()
-  getHealth(): ApiResponse<HealthStatus> {
-    return {
-      success: true,
-      data: this.healthService.getStatus(),
-    };
+  async getHealth(): Promise<HealthStatus> {
+    return this.healthService.getStatus();
   }
 }
