@@ -15,10 +15,11 @@ Recommended stack:
 - React
 - TypeScript
 - Tailwind CSS
+- shadcn/ui-style components backed by Radix UI primitives
 - TanStack Query
 - React Hook Form
 - Zod
-- Shared UI from `packages/ui`
+- Shared app UI in `src/shared/ui`
 - Shared DTOs and contracts from `packages/types`
 
 ## Architecture Style
@@ -268,9 +269,14 @@ Implemented access screens:
 - `/setting/groups/:code/edit` edits the full policy set for a group.
 - `/setting/policies` shows read-only policy details, permissions, and menus.
 - `/setting/audit-logs` lists audit events with filters and pagination.
-- `/setting/menus` lists menu records with active/system status.
+- `/setting/menus` shows a tree list of menu records with active/system status,
+  drag-and-drop sibling sorting, Save/Reset controls, and row-level edit/delete
+  actions.
 - `/setting/menus/create` and `/setting/menus/:code/edit` manage menu records
   through full-page forms.
+- Menu drag sorting is intentionally sibling-only. Reordering a parent keeps its
+  children attached visually, but does not reparent records or drag across
+  levels.
 - Create, edit, delete, and policy-save success states should use
   `src/shared/ui/feedback-dialog.tsx`.
 - Avoid modal forms for create/edit workflows because admin records may grow
@@ -282,6 +288,14 @@ Implemented access screens:
 
 This is an internal tool. Design for speed, clarity, and repeated use:
 
+- Use shadcn/ui as the primary component pattern for admin UI primitives.
+- Keep shadcn-compatible components in `src/shared/ui` and configure them with
+  `components.json`.
+- Use CSS variables in `src/styles/globals.css` as the source of truth for theme
+  tokens, with Tailwind mappings in `tailwind.config.ts`.
+- Use `src/shared/lib/utils.ts` `cn()` for class merging.
+- Prefer existing shared primitives such as `Button`, `Badge`, `Dialog`,
+  `Input`, `Label`, `Select`, and `Table` before writing raw Tailwind controls.
 - Use a persistent sidebar or top-level navigation for primary modules.
 - Use compact tables, filters, tabs, segmented controls, and clear form sections.
 - Keep dashboards information-dense but readable.
@@ -290,10 +304,10 @@ This is an internal tool. Design for speed, clarity, and repeated use:
 - Prefer clear empty states and actionable error states.
 - Keep page headings, breadcrumbs, and primary actions consistent.
 
-Use components from `packages/ui` only when they are generic and reusable across
-apps. Domain-specific admin screens should stay inside `apps/admin/src/views`,
-`apps/admin/src/widgets`, `apps/admin/src/features`, or
-`apps/admin/src/entities`.
+Use `packages/ui` only for generic components reused across multiple apps.
+Admin-specific shadcn primitives and domain screens should stay inside
+`apps/admin/src/shared/ui`, `apps/admin/src/views`, `apps/admin/src/widgets`,
+`apps/admin/src/features`, or `apps/admin/src/entities`.
 
 ## Forms
 

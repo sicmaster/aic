@@ -12,6 +12,9 @@ import {
 import type { AccessControlPolicy } from '@/entities/access-control/types';
 import { ApiClientError } from '@/shared/api/api-client';
 import { routes } from '@/shared/lib/routes';
+import { Badge } from '@/shared/ui/badge';
+import { Button } from '@/shared/ui/button';
+import { Checkbox } from '@/shared/ui/checkbox';
 import { FeedbackDialog } from '@/shared/ui/feedback-dialog';
 import { StatusPill } from '@/shared/ui/status-pill';
 
@@ -50,7 +53,7 @@ export function GroupsEditPage({ groupCode }: { groupCode: string }) {
 
   if (!group) {
     return (
-      <div className="rounded-md border border-border bg-panel p-6 text-sm text-muted">
+      <div className="rounded-lg border border-border bg-card p-6 text-sm text-muted">
         Group not found.
       </div>
     );
@@ -72,17 +75,16 @@ export function GroupsEditPage({ groupCode }: { groupCode: string }) {
           <h1 className="text-2xl font-semibold tracking-normal">Edit group policies</h1>
           <p className="mt-1 text-sm text-muted">{group.description ?? group.name}</p>
         </div>
-        <Link
-          href={routes.groups}
-          className="flex h-10 items-center gap-2 rounded-md border border-border px-3 text-sm font-medium text-muted transition hover:bg-slate-50 hover:text-ink"
-        >
-          <ArrowLeft size={16} aria-hidden="true" />
-          Back
-        </Link>
+        <Button asChild variant="outline">
+          <Link href={routes.groups}>
+            <ArrowLeft size={16} aria-hidden="true" />
+            Back
+          </Link>
+        </Button>
       </div>
 
-      <section className="rounded-md border border-border bg-panel shadow-sm">
-        <div className="flex flex-col gap-3 border-b border-border px-5 py-4 md:flex-row md:items-center md:justify-between">
+      <section className="rounded-lg border border-border bg-card shadow-sm">
+        <div className="flex flex-col gap-3 border-b border-border bg-secondary/30 px-5 py-4 md:flex-row md:items-center md:justify-between">
           <div>
             <p className="text-base font-semibold">{group.name}</p>
             <p className="mt-1 text-xs text-muted">{group.code}</p>
@@ -130,15 +132,12 @@ export function GroupsEditPage({ groupCode }: { groupCode: string }) {
                 A quick preview of enabled permissions from selected policies.
               </p>
             </div>
-            <div className="rounded-md border border-border bg-slate-50 p-3">
+            <div className="rounded-md border border-border bg-secondary/50 p-3">
               <div className="flex flex-wrap gap-1.5">
                 {uniquePermissions(selectedPolicies).map((permission) => (
-                  <span
-                    key={permission}
-                    className="rounded-full border border-border bg-white px-2 py-1 text-xs text-muted"
-                  >
+                  <Badge key={permission} variant="muted">
                     {permission}
-                  </span>
+                  </Badge>
                 ))}
                 {selectedPolicies.length === 0 ? (
                   <span className="text-xs text-muted">No policies selected</span>
@@ -149,32 +148,24 @@ export function GroupsEditPage({ groupCode }: { groupCode: string }) {
         </div>
 
         {updatePoliciesMutation.error ? (
-          <div className="mx-5 mb-5 flex gap-2 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          <div className="mx-5 mb-5 flex gap-2 rounded-md border border-red-500/20 bg-red-500/10 px-3 py-2 text-sm text-red-400">
             <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
             <p>{getMutationMessage(updatePoliciesMutation.error)}</p>
           </div>
         ) : null}
 
         <div className="flex justify-end gap-2 border-t border-border px-5 py-4">
-          <Link
-            href={routes.groups}
-            className="flex h-10 items-center rounded-md border border-border px-4 text-sm font-medium text-muted transition hover:bg-slate-50 hover:text-ink"
-          >
-            Cancel
-          </Link>
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={updatePoliciesMutation.isPending}
-            className="flex h-10 items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-semibold text-white transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-70"
-          >
+          <Button asChild variant="outline">
+            <Link href={routes.groups}>Cancel</Link>
+          </Button>
+          <Button type="button" onClick={handleSave} disabled={updatePoliciesMutation.isPending}>
             {updatePoliciesMutation.isPending ? (
               <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
             ) : (
               <Save className="h-4 w-4" aria-hidden="true" />
             )}
             Save
-          </button>
+          </Button>
         </div>
       </section>
 
@@ -206,17 +197,16 @@ function PolicyOption({
   const menuCount = countMenus(policy.menus);
 
   return (
-    <label className="flex gap-3 rounded-md border border-border p-3 text-sm transition hover:bg-slate-50">
-      <input
-        type="checkbox"
+    <label className="flex gap-3 rounded-md border border-border p-3 text-sm transition hover:bg-secondary/50">
+      <Checkbox
         checked={selected}
         disabled={locked}
-        onChange={(event) => onChange(event.target.checked)}
+        onCheckedChange={(checked) => onChange(checked === true)}
         className="mt-1"
       />
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
-          <p className="font-medium text-ink">{policy.name}</p>
+          <p className="font-medium text-foreground">{policy.name}</p>
           {policy.isSystem ? <StatusPill label="system" tone="warning" /> : null}
           {!policy.isActive ? <StatusPill label="inactive" tone="warning" /> : null}
         </div>

@@ -92,6 +92,17 @@ export type DeleteMenuResponse = {
   deleted: true;
 };
 
+export type UpdateMenuSortOrderRequest = {
+  items: Array<{
+    code: string;
+    sortOrder: number;
+  }>;
+};
+
+export type UpdateMenuSortOrderResponse = {
+  items: AccessControlMenu[];
+};
+
 export type UpdateGroupPoliciesRequest = {
   policyCodes: string[];
 };

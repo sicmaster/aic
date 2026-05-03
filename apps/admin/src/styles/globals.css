@@ -4,6 +4,63 @@
 
 :root {
   color-scheme: light;
+  --background: 210 23% 97%;
+  --foreground: 219 34% 14%;
+  --card: 0 0% 100%;
+  --card-foreground: 219 34% 14%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 219 34% 14%;
+  --primary: 195 71% 31%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 210 28% 94%;
+  --secondary-foreground: 219 34% 14%;
+  --muted: 210 28% 94%;
+  --muted-foreground: 220 14% 46%;
+  --accent: 190 44% 92%;
+  --accent-foreground: 195 71% 24%;
+  --destructive: 4 76% 40%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 214 24% 87%;
+  --input: 214 24% 87%;
+  --ring: 195 71% 31%;
+  --radius: 0.5rem;
+
+  --canvas: 210 23% 97%;
+  --ink: 219 34% 14%;
+  --panel: 0 0% 100%;
+  --success: 158 72% 30%;
+  --warning: 36 100% 36%;
+  --danger: 4 76% 40%;
+}
+
+.dark {
+  color-scheme: dark;
+  --background: 0 0% 3.9%;
+  --foreground: 0 0% 98%;
+  --card: 0 0% 7%;
+  --card-foreground: 0 0% 98%;
+  --popover: 0 0% 7%;
+  --popover-foreground: 0 0% 98%;
+  --primary: 0 0% 98%;
+  --primary-foreground: 0 0% 9%;
+  --secondary: 0 0% 14.9%;
+  --secondary-foreground: 0 0% 98%;
+  --muted: 0 0% 14.9%;
+  --muted-foreground: 0 0% 63.9%;
+  --accent: 0 0% 14.9%;
+  --accent-foreground: 0 0% 98%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 0 0% 18%;
+  --input: 0 0% 18%;
+  --ring: 0 0% 83.1%;
+
+  --canvas: 0 0% 3.9%;
+  --ink: 0 0% 98%;
+  --panel: 0 0% 7%;
+  --success: 151 100% 45%;
+  --warning: 38 92% 50%;
+  --danger: 0 72% 51%;
 }
 
 * {
@@ -17,7 +74,11 @@ html {
 body {
   min-height: 100%;
   margin: 0;
-  background: #f7f8fa;
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-feature-settings:
+    'rlig' 1,
+    'calt' 1;
 }
 
 a {

@@ -10,6 +10,8 @@ import type {
   ListPoliciesResponse,
   UpdateMenuRequest,
   UpdateMenuResponse,
+  UpdateMenuSortOrderRequest,
+  UpdateMenuSortOrderResponse,
   UpdateGroupPoliciesRequest,
   UpdateGroupPoliciesResponse,
 } from './types';
@@ -44,6 +46,15 @@ export function updateMenu(code: string, request: UpdateMenuRequest): Promise<Up
 
 export function deleteMenu(code: string): Promise<DeleteMenuResponse> {
   return apiDelete<DeleteMenuResponse>(`/access-control/menus/${code}`);
+}
+
+export function updateMenuSortOrder(
+  request: UpdateMenuSortOrderRequest,
+): Promise<UpdateMenuSortOrderResponse> {
+  return apiPatch<UpdateMenuSortOrderResponse, UpdateMenuSortOrderRequest>(
+    '/access-control/menus/sort-order',
+    request,
+  );
 }
 
 export function updateGroupPolicies(

@@ -10,7 +10,12 @@ import { useCreateMenuMutation, useUpdateMenuMutation } from '@/entities/access-
 import type { AccessControlMenu } from '@/entities/access-control/types';
 import { ApiClientError } from '@/shared/api/api-client';
 import { routes } from '@/shared/lib/routes';
+import { Button } from '@/shared/ui/button';
+import { Checkbox } from '@/shared/ui/checkbox';
 import { FeedbackDialog } from '@/shared/ui/feedback-dialog';
+import { Input } from '@/shared/ui/input';
+import { Label } from '@/shared/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select';
 import {
   menuCreateSchema,
   menuEditSchema,
@@ -77,14 +82,8 @@ function CreateMenuForm({ menus }: { menus: AccessControlMenu[] }) {
         onSubmit={onSubmit}
       >
         <FieldError message={form.formState.errors.code?.message}>
-          <label className="text-sm font-medium" htmlFor="code">
-            Code
-          </label>
-          <input
-            id="code"
-            className="h-10 w-full rounded-md border border-border px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
-            {...form.register('code')}
-          />
+          <Label htmlFor="code">Code</Label>
+          <Input id="code" {...form.register('code')} />
         </FieldError>
 
         <SharedFields form={form as unknown as UseFormReturn<MenuEditFormValues>} menus={menus} />
@@ -139,15 +138,8 @@ function EditMenuForm({ menu, menus }: { menu: AccessControlMenu; menus: AccessC
         onSubmit={onSubmit}
       >
         <div className="space-y-1.5">
-          <label className="text-sm font-medium" htmlFor="codeReadOnly">
-            Code
-          </label>
-          <input
-            id="codeReadOnly"
-            value={menu.code}
-            readOnly
-            className="h-10 w-full rounded-md border border-border bg-slate-50 px-3 text-sm text-muted outline-none"
-          />
+          <Label htmlFor="codeReadOnly">Code</Label>
+          <Input id="codeReadOnly" value={menu.code} readOnly className="bg-secondary/50" />
         </div>
 
         <SharedFields form={form} menus={menus} selectedMenuCode={menu.code} />
@@ -186,44 +178,36 @@ function MenuFormFrame({
           <h1 className="text-2xl font-semibold tracking-normal">Menu management</h1>
           <p className="mt-1 text-sm text-muted">Manage navigation records and visibility.</p>
         </div>
-        <Link
-          href={routes.menus}
-          className="flex h-10 items-center gap-2 rounded-md border border-border px-3 text-sm font-medium text-muted transition hover:bg-slate-50 hover:text-ink"
-        >
-          <ArrowLeft size={16} aria-hidden="true" />
-          Back
-        </Link>
+        <Button asChild variant="outline">
+          <Link href={routes.menus}>
+            <ArrowLeft size={16} aria-hidden="true" />
+            Back
+          </Link>
+        </Button>
       </div>
 
-      <form className="rounded-md border border-border bg-panel shadow-sm" onSubmit={onSubmit}>
+      <form className="rounded-lg border border-border bg-card shadow-sm" onSubmit={onSubmit}>
         <div className="grid gap-5 p-5 md:grid-cols-2">{children}</div>
 
         {error ? (
-          <div className="mx-5 mb-5 flex gap-2 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          <div className="mx-5 mb-5 flex gap-2 rounded-md border border-red-500/20 bg-red-500/10 px-3 py-2 text-sm text-red-400">
             <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
             <p>{getMutationMessage(error)}</p>
           </div>
         ) : null}
 
         <div className="flex justify-end gap-2 border-t border-border px-5 py-4">
-          <Link
-            href={routes.menus}
-            className="flex h-10 items-center rounded-md border border-border px-4 text-sm font-medium text-muted transition hover:bg-slate-50 hover:text-ink"
-          >
-            Cancel
-          </Link>
-          <button
-            type="submit"
-            disabled={pending}
-            className="flex h-10 items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-semibold text-white transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-70"
-          >
+          <Button asChild variant="outline">
+            <Link href={routes.menus}>Cancel</Link>
+          </Button>
+          <Button type="submit" disabled={pending}>
             {pending ? (
               <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
             ) : (
               <Save className="h-4 w-4" aria-hidden="true" />
             )}
             Save
-          </button>
+          </Button>
         </div>
       </form>
     </div>
@@ -251,89 +235,80 @@ function SharedFields({
   return (
     <>
       <FieldError message={form.formState.errors.label?.message}>
-        <label className="text-sm font-medium" htmlFor="label">
-          Label
-        </label>
-        <input
-          id="label"
-          className="h-10 w-full rounded-md border border-border px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
-          {...form.register('label')}
-        />
+        <Label htmlFor="label">Label</Label>
+        <Input id="label" {...form.register('label')} />
       </FieldError>
 
       <FieldError message={form.formState.errors.level?.message}>
-        <label className="text-sm font-medium" htmlFor="level">
-          Level
-        </label>
-        <select
-          id="level"
-          className="h-10 w-full rounded-md border border-border bg-white px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
-          {...form.register('level', { valueAsNumber: true })}
+        <Label>Level</Label>
+        <Select
+          value={String(level)}
+          onValueChange={(value) => form.setValue('level', Number(value), { shouldValidate: true })}
         >
-          <option value={1}>1</option>
-          <option value={2}>2</option>
-          <option value={3}>3</option>
-        </select>
+          <SelectTrigger>
+            <SelectValue placeholder="Level" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="1">1</SelectItem>
+            <SelectItem value="2">2</SelectItem>
+            <SelectItem value="3">3</SelectItem>
+          </SelectContent>
+        </Select>
       </FieldError>
 
       <FieldError message={form.formState.errors.parentCode?.message}>
-        <label className="text-sm font-medium" htmlFor="parentCode">
-          Parent
-        </label>
-        <select
-          id="parentCode"
+        <Label>Parent</Label>
+        <Select
+          value={form.watch('parentCode') || 'none'}
           disabled={level === 1}
-          className="h-10 w-full rounded-md border border-border bg-white px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/15 disabled:bg-slate-50 disabled:text-muted"
-          {...form.register('parentCode')}
+          onValueChange={(value) =>
+            form.setValue('parentCode', value === 'none' ? '' : value, { shouldValidate: true })
+          }
         >
-          <option value="">No parent</option>
-          {parentOptions.map((menu) => (
-            <option key={menu.code} value={menu.code}>
-              {menu.label}
-            </option>
-          ))}
-        </select>
+          <SelectTrigger>
+            <SelectValue placeholder="Parent" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="none">No parent</SelectItem>
+            {parentOptions.map((menu) => (
+              <SelectItem key={menu.code} value={menu.code}>
+                {menu.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </FieldError>
 
       <FieldError message={form.formState.errors.path?.message}>
-        <label className="text-sm font-medium" htmlFor="path">
-          Path
-        </label>
-        <input
-          id="path"
-          className="h-10 w-full rounded-md border border-border px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
-          {...form.register('path')}
-        />
+        <Label htmlFor="path">Path</Label>
+        <Input id="path" {...form.register('path')} />
       </FieldError>
 
       <FieldError message={form.formState.errors.icon?.message}>
-        <label className="text-sm font-medium" htmlFor="icon">
-          Icon
-        </label>
-        <input
-          id="icon"
-          className="h-10 w-full rounded-md border border-border px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
-          {...form.register('icon')}
-        />
+        <Label htmlFor="icon">Icon</Label>
+        <Input id="icon" {...form.register('icon')} />
       </FieldError>
 
       <FieldError message={form.formState.errors.sortOrder?.message}>
-        <label className="text-sm font-medium" htmlFor="sortOrder">
-          Sort order
-        </label>
-        <input
+        <Label htmlFor="sortOrder">Sort order</Label>
+        <Input
           id="sortOrder"
           type="number"
           min={0}
-          className="h-10 w-full rounded-md border border-border px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
           {...form.register('sortOrder', { valueAsNumber: true })}
         />
       </FieldError>
 
-      <label className="flex h-10 items-center gap-2 text-sm">
-        <input type="checkbox" {...form.register('isActive')} />
-        Active
-      </label>
+      <div className="flex h-10 items-center gap-2 text-sm">
+        <Checkbox
+          id="isActive"
+          checked={form.watch('isActive')}
+          onCheckedChange={(checked) =>
+            form.setValue('isActive', checked === true, { shouldValidate: true })
+          }
+        />
+        <Label htmlFor="isActive">Active</Label>
+      </div>
     </>
   );
 }
@@ -348,7 +323,7 @@ function FieldError({
   return (
     <div className="space-y-1.5">
       {children}
-      {message ? <p className="text-xs text-red-600">{message}</p> : null}
+      {message ? <p className="text-xs text-red-400">{message}</p> : null}
     </div>
   );
 }

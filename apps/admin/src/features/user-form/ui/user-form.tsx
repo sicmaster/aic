@@ -14,7 +14,12 @@ import {
 import type { UserGroupSummary, UserListItem, UserStatus } from '@/entities/user/types';
 import { ApiClientError } from '@/shared/api/api-client';
 import { routes } from '@/shared/lib/routes';
+import { Button } from '@/shared/ui/button';
+import { Checkbox } from '@/shared/ui/checkbox';
 import { FeedbackDialog } from '@/shared/ui/feedback-dialog';
+import { Input } from '@/shared/ui/input';
+import { Label } from '@/shared/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select';
 import {
   userCreateSchema,
   userEditSchema,
@@ -80,38 +85,18 @@ function CreateUserForm() {
         onSubmit={onSubmit}
       >
         <FieldError message={form.formState.errors.fullName?.message}>
-          <label className="text-sm font-medium" htmlFor="fullName">
-            Full name
-          </label>
-          <input
-            id="fullName"
-            className="h-10 w-full rounded-md border border-border px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
-            {...form.register('fullName')}
-          />
+          <Label htmlFor="fullName">Full name</Label>
+          <Input id="fullName" {...form.register('fullName')} />
         </FieldError>
 
         <FieldError message={form.formState.errors.email?.message}>
-          <label className="text-sm font-medium" htmlFor="email">
-            Email
-          </label>
-          <input
-            id="email"
-            type="email"
-            className="h-10 w-full rounded-md border border-border px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
-            {...form.register('email')}
-          />
+          <Label htmlFor="email">Email</Label>
+          <Input id="email" type="email" {...form.register('email')} />
         </FieldError>
 
         <FieldError message={form.formState.errors.password?.message}>
-          <label className="text-sm font-medium" htmlFor="password">
-            Temporary password
-          </label>
-          <input
-            id="password"
-            type="password"
-            className="h-10 w-full rounded-md border border-border px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
-            {...form.register('password')}
-          />
+          <Label htmlFor="password">Temporary password</Label>
+          <Input id="password" type="password" {...form.register('password')} />
         </FieldError>
 
         <GroupSelector
@@ -168,43 +153,34 @@ function EditUserForm({ user }: { user: UserListItem }) {
         onSubmit={onSubmit}
       >
         <FieldError message={form.formState.errors.fullName?.message}>
-          <label className="text-sm font-medium" htmlFor="fullName">
-            Full name
-          </label>
-          <input
-            id="fullName"
-            className="h-10 w-full rounded-md border border-border px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
-            {...form.register('fullName')}
-          />
+          <Label htmlFor="fullName">Full name</Label>
+          <Input id="fullName" {...form.register('fullName')} />
         </FieldError>
 
         <div className="space-y-1.5">
-          <label className="text-sm font-medium" htmlFor="emailReadOnly">
-            Email
-          </label>
-          <input
-            id="emailReadOnly"
-            value={user.email}
-            readOnly
-            className="h-10 w-full rounded-md border border-border bg-slate-50 px-3 text-sm text-muted outline-none"
-          />
+          <Label htmlFor="emailReadOnly">Email</Label>
+          <Input id="emailReadOnly" value={user.email} readOnly className="bg-secondary/50" />
         </div>
 
         <FieldError message={form.formState.errors.status?.message}>
-          <label className="text-sm font-medium" htmlFor="status">
-            Status
-          </label>
-          <select
-            id="status"
-            className="h-10 w-full rounded-md border border-border bg-white px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
-            {...form.register('status')}
+          <Label>Status</Label>
+          <Select
+            value={form.watch('status')}
+            onValueChange={(value: UserStatus) =>
+              form.setValue('status', value, { shouldValidate: true })
+            }
           >
-            {statusOptions.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger>
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              {statusOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </FieldError>
 
         <GroupSelector
@@ -250,44 +226,36 @@ function UserFormFrame({
           <h1 className="text-2xl font-semibold tracking-normal">{title}</h1>
           <p className="mt-1 text-sm text-muted">{description}</p>
         </div>
-        <Link
-          href={routes.users}
-          className="flex h-10 items-center gap-2 rounded-md border border-border px-3 text-sm font-medium text-muted transition hover:bg-slate-50 hover:text-ink"
-        >
-          <ArrowLeft size={16} aria-hidden="true" />
-          Back
-        </Link>
+        <Button asChild variant="outline">
+          <Link href={routes.users}>
+            <ArrowLeft size={16} aria-hidden="true" />
+            Back
+          </Link>
+        </Button>
       </div>
 
-      <form className="rounded-md border border-border bg-panel shadow-sm" onSubmit={onSubmit}>
+      <form className="rounded-lg border border-border bg-card shadow-sm" onSubmit={onSubmit}>
         <div className="grid gap-5 p-5 md:grid-cols-2">{children}</div>
 
         {error ? (
-          <div className="mx-5 mb-5 flex gap-2 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          <div className="mx-5 mb-5 flex gap-2 rounded-md border border-red-500/20 bg-red-500/10 px-3 py-2 text-sm text-red-400">
             <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
             <p>{getMutationMessage(error)}</p>
           </div>
         ) : null}
 
         <div className="flex justify-end gap-2 border-t border-border px-5 py-4">
-          <Link
-            href={routes.users}
-            className="flex h-10 items-center rounded-md border border-border px-4 text-sm font-medium text-muted transition hover:bg-slate-50 hover:text-ink"
-          >
-            Cancel
-          </Link>
-          <button
-            type="submit"
-            disabled={pending}
-            className="flex h-10 items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-semibold text-white transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-70"
-          >
+          <Button asChild variant="outline">
+            <Link href={routes.users}>Cancel</Link>
+          </Button>
+          <Button type="submit" disabled={pending}>
             {pending ? (
               <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
             ) : (
               <Save className="h-4 w-4" aria-hidden="true" />
             )}
             Save
-          </button>
+          </Button>
         </div>
       </form>
     </div>
@@ -310,23 +278,25 @@ function GroupSelector({
       <p className="text-sm font-medium">Groups</p>
       <div className="grid gap-2">
         {groups.map((group) => (
-          <label
+          <div
             key={group.code}
             className="flex h-10 items-center gap-2 rounded-md border border-border px-3 text-sm"
           >
-            <input
-              type="checkbox"
-              value={group.code}
+            <Checkbox
+              id={`group-${group.code}`}
               checked={selectedGroups.includes(group.code)}
-              onChange={(event) => {
-                const nextGroups = event.target.checked
-                  ? [...selectedGroups, group.code]
-                  : selectedGroups.filter((code) => code !== group.code);
+              onCheckedChange={(checked) => {
+                const nextGroups =
+                  checked === true
+                    ? [...selectedGroups, group.code]
+                    : selectedGroups.filter((code) => code !== group.code);
                 onChange(nextGroups);
               }}
             />
-            {group.name}
-          </label>
+            <Label htmlFor={`group-${group.code}`} className="flex-1">
+              {group.name}
+            </Label>
+          </div>
         ))}
       </div>
     </FieldError>
@@ -343,7 +313,7 @@ function FieldError({
   return (
     <div className="space-y-1.5">
       {children}
-      {message ? <p className="text-xs text-red-600">{message}</p> : null}
+      {message ? <p className="text-xs text-red-400">{message}</p> : null}
     </div>
   );
 }

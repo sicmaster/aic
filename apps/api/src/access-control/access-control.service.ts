@@ -16,9 +16,10 @@ import {
   policyMenus,
   policyPermissions,
 } from '../database/schema';
-import type { UpdateGroupPoliciesDto } from './dto/update-group-policies.dto';
 import type { CreateMenuDto } from './dto/create-menu.dto';
+import type { UpdateGroupPoliciesDto } from './dto/update-group-policies.dto';
 import type { UpdateMenuDto } from './dto/update-menu.dto';
+import type { UpdateMenuSortOrderDto } from './dto/update-menu-sort-order.dto';
 import type {
   AccessControlGroup,
   AccessControlMenu,
@@ -35,6 +36,7 @@ import type {
   ListAccessControlPoliciesResult,
   UpdateAccessControlMenuResult,
   UpdateGroupPoliciesResult,
+  UpdateMenuSortOrderResult,
 } from './access-control.types';
 
 @Injectable()
@@ -325,6 +327,95 @@ export class AccessControlService {
     });
 
     return { deleted: true };
+  }
+
+  async updateMenuSortOrder(
+    dto: UpdateMenuSortOrderDto,
+    actorUserId: string,
+    auditContext: AuditContext,
+  ): Promise<UpdateMenuSortOrderResult> {
+    const sortItems = dto.items.map((item) => ({
+      code: item.code.trim(),
+      sortOrder: item.sortOrder,
+    }));
+    const uniqueCodes = new Set(sortItems.map((item) => item.code));
+
+    if (uniqueCodes.size !== sortItems.length) {
+      throw new AppException(
+        {
+          code: ApiErrorCode.BAD_REQUEST,
+          message: 'Menu sort items must not contain duplicate codes.',
+        },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const menuRows = await this.database
+      .select({
+        id: menus.id,
+        code: menus.code,
+        parentId: menus.parentId,
+        sortOrder: menus.sortOrder,
+      })
+      .from(menus)
+      .where(and(inArray(menus.code, [...uniqueCodes]), isNull(menus.deletedAt)));
+
+    if (menuRows.length !== sortItems.length) {
+      throw new AppException(
+        {
+          code: ApiErrorCode.BAD_REQUEST,
+          message: 'One or more menus are invalid.',
+        },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const parentIds = new Set(menuRows.map((row) => row.parentId ?? 'root'));
+
+    if (parentIds.size !== 1) {
+      throw new AppException(
+        {
+          code: ApiErrorCode.BAD_REQUEST,
+          message: 'Menu sort order can only be updated for menus with the same parent.',
+        },
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+
+    const sortOrderByCode = new Map(sortItems.map((item) => [item.code, item.sortOrder]));
+    const before = menuRows
+      .map((row) => ({
+        code: row.code,
+        sortOrder: row.sortOrder,
+      }))
+      .sort((a, b) => a.sortOrder - b.sortOrder || a.code.localeCompare(b.code));
+
+    await this.database.transaction(async (tx) => {
+      for (const row of menuRows) {
+        await tx
+          .update(menus)
+          .set({
+            sortOrder: sortOrderByCode.get(row.code) ?? row.sortOrder,
+            updatedAt: new Date(),
+          })
+          .where(eq(menus.id, row.id));
+      }
+    });
+
+    await this.auditService.record({
+      ...auditContext,
+      actorUserId,
+      action: 'menus.update-sort-order',
+      entityType: 'menu',
+      entityId: menuRows[0]?.parentId ?? 'root',
+      metadata: {
+        parentId: menuRows[0]?.parentId ?? null,
+        before,
+        after: sortItems,
+      },
+    });
+
+    return this.listMenus();
   }
 
   async updateGroupPolicies(

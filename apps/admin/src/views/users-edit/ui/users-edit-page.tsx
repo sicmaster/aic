@@ -20,7 +20,7 @@ export function UsersEditPage({ userId }: { userId: string }) {
 
   if (!userQuery.data?.user) {
     return (
-      <div className="rounded-md border border-border bg-panel p-6 text-sm text-muted">
+      <div className="rounded-lg border border-border bg-card p-6 text-sm text-muted">
         User not found.
       </div>
     );

@@ -19,6 +19,7 @@ async function bootstrap() {
   app.useLogger(app.get(Logger));
   await app.register(fastifyCors, {
     credentials: true,
+    methods: ['GET', 'HEAD', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
     origin: configService.get<string[]>('CORS_ORIGINS', ['http://localhost:3000']),
   });
   await app.register(fastifyCookie);

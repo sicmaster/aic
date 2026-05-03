@@ -22,7 +22,7 @@ export function MenusEditPage({ menuCode }: { menuCode: string }) {
 
   if (!menuQuery.data?.menu) {
     return (
-      <div className="rounded-md border border-border bg-panel p-6 text-sm text-muted">
+      <div className="rounded-lg border border-border bg-card p-6 text-sm text-muted">
         Menu not found.
       </div>
     );

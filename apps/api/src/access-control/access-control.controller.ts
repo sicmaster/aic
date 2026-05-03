@@ -18,10 +18,12 @@ import type {
   ListAccessControlPoliciesResult,
   UpdateAccessControlMenuResult,
   UpdateGroupPoliciesResult,
+  UpdateMenuSortOrderResult,
 } from './access-control.types';
 import { CreateMenuDto } from './dto/create-menu.dto';
 import { UpdateMenuDto } from './dto/update-menu.dto';
 import { UpdateGroupPoliciesDto } from './dto/update-group-policies.dto';
+import { UpdateMenuSortOrderDto } from './dto/update-menu-sort-order.dto';
 
 @Controller('access-control')
 @UseGuards(AuthenticatedSessionGuard, PermissionsGuard)
@@ -67,6 +69,16 @@ export class AccessControlController {
   @RequirePermissions('menus.read')
   async listMenus(): Promise<ListAccessControlMenusResult> {
     return this.accessControlService.listMenus();
+  }
+
+  @Patch('menus/sort-order')
+  @RequirePermissions('menus.update')
+  async updateMenuSortOrder(
+    @Body() dto: UpdateMenuSortOrderDto,
+    @CurrentSession() session: AuthSessionPayload,
+    @CurrentAuditContext() auditContext: AuditContext,
+  ): Promise<UpdateMenuSortOrderResult> {
+    return this.accessControlService.updateMenuSortOrder(dto, session.user.id, auditContext);
   }
 
   @Get('menus/:code')

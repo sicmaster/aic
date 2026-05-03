@@ -280,7 +280,7 @@ Rules:
 - Mutating admin workflows should record audit events with actor, action,
   entity type/id, request id, IP address, user agent, and safe metadata.
 - Current audited workflows include user create/update/delete and group policy
-  assignment updates, plus menu create/update/delete.
+  assignment updates, plus menu create/update/delete/sort-order updates.
 - Do not write passwords, raw tokens, cookies, or sensitive request payloads to
   audit metadata.
 
@@ -292,6 +292,7 @@ First implemented menu-management endpoints:
 GET    /api/access-control/menus
 GET    /api/access-control/menus/:code
 POST   /api/access-control/menus
+PATCH  /api/access-control/menus/sort-order
 PATCH  /api/access-control/menus/:code
 DELETE /api/access-control/menus/:code
 ```
@@ -301,10 +302,16 @@ Rules:
 - Menu reads require `menus.read`.
 - Menu creation requires `menus.create`.
 - Menu updates require `menus.update`.
+- Menu sort-order updates require `menus.update`.
 - Menu deletion requires `menus.delete`.
 - Menus support levels 1 through 3.
 - Level 1 menus cannot have parents.
 - Level 2 and 3 menus must reference a parent exactly one level above them.
+- `PATCH /api/access-control/menus/sort-order` only updates menus under the
+  same parent/root in one request. Do not allow cross-parent drag/reparenting
+  through this endpoint.
+- Sort-order updates should record `menus.update-sort-order` audit events with
+  before/after order metadata.
 - Delete is soft delete: set `deleted_at`, set `is_active=false`, and hide from
   active list responses.
 - System menus cannot be deleted.

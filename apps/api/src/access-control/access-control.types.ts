@@ -83,6 +83,10 @@ export type DeleteAccessControlMenuResult = {
   deleted: true;
 };
 
+export type UpdateMenuSortOrderResult = {
+  items: AccessControlMenu[];
+};
+
 export type UpdateGroupPoliciesResult = {
   group: AccessControlGroup;
 };

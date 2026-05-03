@@ -1,6 +1,6 @@
 'use client';
 
-import { ChevronRight, Menu, ShieldCheck } from 'lucide-react';
+import { Eye, Menu, MoreHorizontal, ShieldCheck, SlidersHorizontal } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { usePoliciesQuery } from '@/entities/access-control/hooks';
 import type {
@@ -8,13 +8,47 @@ import type {
   AccessControlPermission,
   AccessControlPolicy,
 } from '@/entities/access-control/types';
+import { Badge } from '@/shared/ui/badge';
+import { Button } from '@/shared/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/shared/ui/dropdown-menu';
 import { StatusPill } from '@/shared/ui/status-pill';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/shared/ui/table';
+
+const policyColumns = [
+  { key: 'permissions', label: 'Permissions' },
+  { key: 'menus', label: 'Menus' },
+  { key: 'status', label: 'Status' },
+] as const;
+
+type PolicyColumnKey = (typeof policyColumns)[number]['key'];
+type VisiblePolicyColumns = Record<PolicyColumnKey, boolean>;
 
 export function PoliciesPage() {
   const policiesQuery = usePoliciesQuery();
   const policies = policiesQuery.data?.items ?? [];
   const [selectedCode, setSelectedCode] = useState<string | undefined>();
+  const [visibleColumns, setVisibleColumns] = useState<VisiblePolicyColumns>({
+    menus: true,
+    permissions: true,
+    status: true,
+  });
   const selectedPolicy = policies.find((policy) => policy.code === selectedCode) ?? policies[0];
+  const tableColSpan = 2 + policyColumns.filter((column) => visibleColumns[column.key]).length;
+
+  const handleToggleColumn = (columnKey: PolicyColumnKey, checked: boolean) => {
+    setVisibleColumns((current) => ({
+      ...current,
+      [columnKey]: checked,
+    }));
+  };
 
   return (
     <div className="mx-auto max-w-7xl space-y-6">
@@ -32,44 +66,66 @@ export function PoliciesPage() {
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_420px]">
-        <section className="rounded-md border border-border bg-panel shadow-sm">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-border text-sm">
-              <thead className="bg-slate-50 text-left text-xs font-semibold uppercase text-muted">
-                <tr>
-                  <th className="px-4 py-3">Policy</th>
-                  <th className="px-4 py-3">Permissions</th>
-                  <th className="px-4 py-3">Menus</th>
-                  <th className="px-4 py-3">Status</th>
-                  <th className="px-4 py-3 text-right">Inspect</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {policies.map((policy) => (
-                  <PolicyRow
-                    key={policy.code}
-                    active={selectedPolicy?.code === policy.code}
-                    policy={policy}
-                    onSelect={() => setSelectedCode(policy.code)}
-                  />
+        <section className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
+          <div className="flex justify-end border-b border-border bg-secondary/30 p-4">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button type="button" variant="outline" className="h-9">
+                  <SlidersHorizontal size={16} aria-hidden="true" />
+                  Customize Columns
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Toggle columns</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {policyColumns.map((column) => (
+                  <DropdownMenuCheckboxItem
+                    key={column.key}
+                    checked={visibleColumns[column.key]}
+                    onCheckedChange={(checked) => handleToggleColumn(column.key, checked === true)}
+                  >
+                    {column.label}
+                  </DropdownMenuCheckboxItem>
                 ))}
-                {policiesQuery.isLoading ? (
-                  <tr>
-                    <td className="px-4 py-8 text-center text-muted" colSpan={5}>
-                      Loading policies
-                    </td>
-                  </tr>
-                ) : null}
-                {!policiesQuery.isLoading && policies.length === 0 ? (
-                  <tr>
-                    <td className="px-4 py-8 text-center text-muted" colSpan={5}>
-                      No policies found
-                    </td>
-                  </tr>
-                ) : null}
-              </tbody>
-            </table>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
+          <Table>
+            <TableHeader className="bg-secondary/60">
+              <TableRow>
+                <TableHead>Policy</TableHead>
+                {visibleColumns.permissions ? <TableHead>Permissions</TableHead> : null}
+                {visibleColumns.menus ? <TableHead>Menus</TableHead> : null}
+                {visibleColumns.status ? <TableHead>Status</TableHead> : null}
+                <TableHead className="w-12 text-right" aria-label="Actions" />
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {policies.map((policy) => (
+                <PolicyRow
+                  key={policy.code}
+                  active={selectedPolicy?.code === policy.code}
+                  policy={policy}
+                  visibleColumns={visibleColumns}
+                  onSelect={() => setSelectedCode(policy.code)}
+                />
+              ))}
+              {policiesQuery.isLoading ? (
+                <TableRow>
+                  <TableCell className="py-8 text-center text-muted" colSpan={tableColSpan}>
+                    Loading policies
+                  </TableCell>
+                </TableRow>
+              ) : null}
+              {!policiesQuery.isLoading && policies.length === 0 ? (
+                <TableRow>
+                  <TableCell className="py-8 text-center text-muted" colSpan={tableColSpan}>
+                    No policies found
+                  </TableCell>
+                </TableRow>
+              ) : null}
+            </TableBody>
+          </Table>
         </section>
 
         <PolicyDetails policy={selectedPolicy} />
@@ -82,44 +138,63 @@ function PolicyRow({
   active,
   onSelect,
   policy,
+  visibleColumns,
 }: {
   active: boolean;
   onSelect: () => void;
   policy: AccessControlPolicy;
+  visibleColumns: VisiblePolicyColumns;
 }) {
   return (
-    <tr className={active ? 'bg-slate-50' : undefined}>
-      <td className="px-4 py-3">
+    <TableRow className={active ? 'bg-secondary/60' : undefined}>
+      <TableCell>
         <div>
-          <p className="font-medium text-ink">{policy.name}</p>
+          <p className="font-medium text-foreground">{policy.name}</p>
           <p className="text-xs text-muted">{policy.description ?? policy.code}</p>
         </div>
-      </td>
-      <td className="px-4 py-3 text-muted">{policy.permissions.length}</td>
-      <td className="px-4 py-3 text-muted">{countMenus(policy.menus)}</td>
-      <td className="px-4 py-3">
-        <div className="flex flex-wrap gap-1.5">
-          {policy.isSystem ? <StatusPill label="system" tone="warning" /> : null}
-          <StatusPill
-            label={policy.isActive ? 'active' : 'inactive'}
-            tone={policy.isActive ? 'success' : 'warning'}
-          />
-        </div>
-      </td>
-      <td className="px-4 py-3">
+      </TableCell>
+      {visibleColumns.permissions ? (
+        <TableCell className="text-muted">{policy.permissions.length}</TableCell>
+      ) : null}
+      {visibleColumns.menus ? (
+        <TableCell className="text-muted">{countMenus(policy.menus)}</TableCell>
+      ) : null}
+      {visibleColumns.status ? (
+        <TableCell>
+          <div className="flex flex-wrap gap-1.5">
+            {policy.isSystem ? <StatusPill label="system" tone="warning" /> : null}
+            <StatusPill
+              label={policy.isActive ? 'active' : 'inactive'}
+              tone={policy.isActive ? 'success' : 'warning'}
+            />
+          </div>
+        </TableCell>
+      ) : null}
+      <TableCell>
         <div className="flex justify-end">
-          <button
-            type="button"
-            onClick={onSelect}
-            className="flex h-8 w-8 items-center justify-center rounded-md text-muted transition hover:bg-white hover:text-ink"
-            aria-label={`Inspect ${policy.name}`}
-            title="Inspect"
-          >
-            <ChevronRight size={16} aria-hidden="true" />
-          </button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="text-muted hover:text-foreground"
+                aria-label={`Open actions for ${policy.name}`}
+              >
+                <MoreHorizontal size={16} aria-hidden="true" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+              <DropdownMenuItem onClick={onSelect}>
+                <Eye size={15} aria-hidden="true" />
+                Inspect policy
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
-      </td>
-    </tr>
+      </TableCell>
+    </TableRow>
   );
 }
 
@@ -131,14 +206,14 @@ function PolicyDetails({ policy }: { policy: AccessControlPolicy | undefined }) 
 
   if (!policy) {
     return (
-      <aside className="rounded-md border border-border bg-panel p-5 text-sm text-muted shadow-sm">
+      <aside className="rounded-lg border border-border bg-card p-5 text-sm text-muted shadow-sm">
         Select a policy to inspect its permissions and menus.
       </aside>
     );
   }
 
   return (
-    <aside className="space-y-4 rounded-md border border-border bg-panel p-5 shadow-sm">
+    <aside className="space-y-4 rounded-lg border border-border bg-card p-5 shadow-sm">
       <div>
         <div className="flex items-center gap-2">
           <ShieldCheck size={17} aria-hidden="true" />
@@ -158,12 +233,9 @@ function PolicyDetails({ policy }: { policy: AccessControlPolicy | undefined }) 
               <p className="mb-1.5 text-xs font-semibold uppercase text-muted">{group.resource}</p>
               <div className="flex flex-wrap gap-1.5">
                 {group.permissions.map((permission) => (
-                  <span
-                    key={permission.code}
-                    className="rounded-full border border-border bg-white px-2 py-1 text-xs text-muted"
-                  >
+                  <Badge key={permission.code} variant="muted">
                     {permission.code}
-                  </span>
+                  </Badge>
                 ))}
               </div>
             </div>
@@ -180,7 +252,7 @@ function PolicyDetails({ policy }: { policy: AccessControlPolicy | undefined }) 
           {flattenMenus(policy.menus).map((menu) => (
             <div key={menu.code} className="flex items-center gap-2 text-sm">
               <span className="w-4 shrink-0 text-xs text-muted">{menu.level}</span>
-              <span className="font-medium text-ink">{menu.label}</span>
+              <span className="font-medium text-foreground">{menu.label}</span>
               <span className="truncate text-xs text-muted">{menu.path ?? menu.code}</span>
             </div>
           ))}

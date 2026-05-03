@@ -9,8 +9,14 @@ import {
   listPolicies,
   updateGroupPolicies,
   updateMenu,
+  updateMenuSortOrder,
 } from './api';
-import type { CreateMenuRequest, UpdateGroupPoliciesRequest, UpdateMenuRequest } from './types';
+import type {
+  CreateMenuRequest,
+  UpdateGroupPoliciesRequest,
+  UpdateMenuRequest,
+  UpdateMenuSortOrderRequest,
+} from './types';
 
 export const groupsQueryKey = ['access-control', 'groups'] as const;
 export const groupQueryKey = (code: string) => ['access-control', 'groups', code] as const;
@@ -95,6 +101,18 @@ export function useDeleteMenuMutation() {
   return useMutation({
     mutationFn: (code: string) => deleteMenu(code),
     onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: menusQueryKey });
+    },
+  });
+}
+
+export function useUpdateMenuSortOrderMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (request: UpdateMenuSortOrderRequest) => updateMenuSortOrder(request),
+    onSuccess: async (response) => {
+      queryClient.setQueryData(menusQueryKey, response);
       await queryClient.invalidateQueries({ queryKey: menusQueryKey });
     },
   });

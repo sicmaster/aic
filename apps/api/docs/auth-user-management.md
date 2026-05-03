@@ -205,6 +205,8 @@ Menu rules:
 - `parent_id` is required for level 2 and 3 menus.
 - Level 1 menus should not have a parent.
 - Use `sort_order` for display order.
+- Sort order can be updated in bulk only for menus under the same parent/root.
+  Cross-parent drag/reparenting is not part of the first implementation.
 - Use `is_active=false` to hide a menu without deleting it.
 - Use `deleted_at` for soft delete.
 - Policies control which menus are visible through `policy_menus`.
@@ -325,6 +327,7 @@ Current implementation:
 - API: `GET /api/access-control/menus`
 - API: `GET /api/access-control/menus/:code`
 - API: `POST /api/access-control/menus`
+- API: `PATCH /api/access-control/menus/sort-order`
 - API: `PATCH /api/access-control/menus/:code`
 - API: `DELETE /api/access-control/menus/:code`
 - Group policy assignment requires `groups.update`.
@@ -334,7 +337,10 @@ Current implementation:
   accidentally locking admins out of the system.
 - `PATCH /api/access-control/groups/:code/policies` replaces the full policy
   set for the group and records `assigned_by`.
-- Menu create/update/delete writes audit logs and enforces level/parent rules.
+- Menu create/update/delete and sort-order updates write audit logs and enforce
+  level/parent rules.
+- Menu sort-order updates reject mixed-parent payloads so drag-and-drop cannot
+  accidentally reparent menus.
 - Menu delete is soft delete and system menus cannot be deleted.
 
 ## Flow
